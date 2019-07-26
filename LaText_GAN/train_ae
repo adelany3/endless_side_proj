@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri May  3 14:30:30 2019
+
+@author: alec.delany
+"""
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.distributions.normal import Normal
+import numpy as np
+from model import Autoencoder
+from dataprep import load
+
+def train(epoch):
+    model.train()
+    train_loss = 0.
+    for i, x in enumerate(train_loader):
+        optimizer.zero_grad()
+        if cuda:
+            x = x.cuda()
+        _, logits = model(x)
+        loss = criterion(logits, x)
+        train_loss += loss.item()
+        loss.backward()
+        optimizer.step()
+        if interval > 0 and i % interval == 0:
+            print('Epoch: {} | Batch: {}/{} ({:.0f}%) | Loss: {:.6f}'.format(
+                epoch, batch_size*i, len(train_loader.dataset),
+                100.*(batch_size*i)/len(train_loader.dataset),
+                loss.item()
+            ))
+    train_loss /= len(train_loader)
+    print('* (Train) Epoch: {} | Loss: {:.4f}'.format(epoch, train_loss))
+    return train_loss
+
+seed = 0
+epochs = 5
+batch_size = 32
+lr = 5e-4
+dropout = 0.5
+seq_len = 300
+embedding_dim = 200
+latent_dim = 100
+enc_hidden_dim = 100
+dec_hidden_dim = 600
+interval = 10
+cuda = False
+
+torch.manual_seed(seed)
+torch.backends.cudnn.deterministic = True
+
+train_loader, vocab = load(batch_size, seq_len)
+
+model = Autoencoder(enc_hidden_dim, dec_hidden_dim, embedding_dim,
+                    latent_dim, vocab.size(), dropout, seq_len)
+
+if cuda:
+    model = model.cuda()
+
+print('Parameters:', sum([p.numel() for p in model.parameters() if p.requires_grad]))
+print('Vocab size:', vocab.size())
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=lr)
+
+best_loss = np.inf
+
+for epoch in range(1, epochs + 1):
+    loss = train(epoch)
+    if loss < best_loss:
+        best_loss = loss
+        print('* Saved')
+        torch.save(model.state_dict(), 'autoencoder.th')
