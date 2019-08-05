@@ -23,7 +23,7 @@ class Encoder(nn.Module):
         modules = list(resnet.children())[:-2]
         self.resnet = nn.Sequential(*modules)
         
-        self.adpative_pool= nn.AdaptiveAvgPool2d((self.encoded_img_size, self.encoded_img_size))
+        self.adaptive_pool= nn.AdaptiveAvgPool2d((self.encoded_img_size, self.encoded_img_size))
         self.fine_tune()
         
     def forward(self, images):
@@ -75,7 +75,7 @@ class Attention(nn.Module):
         att1 = self.encoder_atten(encoder_out) #(batch, n_pixels, atten_dim)
         att2 = self.decoder_atten(decoder_hidden) #(batch, atten_dim)
         att = self.full_atten(self.relu(att1 + att2.unsqueeze(1))).squeeze(2) #(batch, n_pixels)
-        alpha = self.sfotmax(att) #(batch, n_pixels)
+        alpha = self.softmax(att) #(batch, n_pixels)
         atten_weighted_encoding = (encoder_out * alpha.unsqueeze(2)).sum(dim = 1) #(batch, encoder_dim)
         
         return atten_weighted_encoding, alpha

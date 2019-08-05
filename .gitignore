@@ -5,6 +5,7 @@
 *.csv
 *.xlsx
 *.gz
+*.json
 
 # images
 *.gif
@@ -25,8 +26,8 @@
 *.RData
 *.Rhistory
 
-/*.pdf
-
+*.pdf
+*.hdf5
 
 
 

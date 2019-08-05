@@ -40,7 +40,7 @@ class CaptionDataset(Dataset):
             self.captions = json.load(j)
 
         # Load caption lengths (completely into memory)
-        with open(os.path.join(data_folder, self.split + '_CAPLENS_' + data_name + '.json'), 'r') as j:
+        with open(os.path.join(data_folder, self.split + '_CAPTLENS_' + data_name + '.json'), 'r') as j:
             self.caplens = json.load(j)
 
         # PyTorch transformation pipeline for the image (normalizing, etc.)

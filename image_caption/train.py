@@ -35,7 +35,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 start_epoch = 0
 epochs = 120
-epochs_since_improvment = 0
+epochs_since_improvement = 0
 batch_size = 32
 workers = 1
 encoder_lr = 1e-4
@@ -198,9 +198,9 @@ criterion = nn.CrossEntropyLoss().to(device)
 
 normalize = transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.255])
 
-train_loader = torch.utils.data.DataLoader(CaptionDataset(path, base_filename, 'TRAIN', transform = transforms.Compase([normalize])),
+train_loader = torch.utils.data.DataLoader(CaptionDataset(path, base_filename, 'TRAIN', transform = transforms.Compose([normalize])),
                                           batch_size = batch_size, shuffle = True, num_workers = workers, pin_memory = True)
-val_loader = torch.utils.data.DataLoader(CaptionDataset(path, base_filename, 'VAL', transform = transforms.Compase([normalize])),
+val_loader = torch.utils.data.DataLoader(CaptionDataset(path, base_filename, 'VAL', transform = transforms.Compose([normalize])),
                                           batch_size = batch_size, shuffle = True, num_workers = workers, pin_memory = True)
 
 for epoch in range(start_epoch, epochs):
@@ -212,7 +212,7 @@ for epoch in range(start_epoch, epochs):
         if fine_tune_encoder:
             adjust_learning_rate(encoder_optimizer, 0.8)
             
-    train(train_loader = train_loader, encoder = encoder, decoder = decoder, crieterion = criterion, 
+    train(train_loader = train_loader, encoder = encoder, decoder = decoder, criterion = criterion, 
                           encoder_optimizer = encoder_optimizer, decoder_optimizer = decoder_optimizer, epoch = epoch)
     
     recent_bleu4 = validate(val_loader = val_loader, encoder = encoder, decoder = decoder, criterion = criterion)
