@@ -70,10 +70,10 @@ def train(train_loader, encoder, decoder, criterion, encoder_optimizer, decoder_
         
         targets = caps_sorted[:, 1:]
         
-        scores, _ = pack_padded_sequence(scores, decode_lengths, batch_first = True)
-        targets, _ = pack_padded_sequence(targets, decode_lengths, batch_first = True)
+        scores= pack_padded_sequence(scores, decode_lengths, batch_first = True)
+        targets = pack_padded_sequence(targets, decode_lengths, batch_first = True)
 
-        loss = criterion(scores, targets)
+        loss = criterion(scores.data, targets.data)
         
         #Doubly stochastic attention reg
         loss += alpha_c * ((1. - alphas.sum(dim = 1)) ** 2).mean()   #MSE
@@ -126,8 +126,17 @@ def validate(val_loader, encoder, decoder, criterion):
             
             targets = caps_sorted[:, 1:]
         
-            scores, _ = pack_padded_sequence(scores, decode_lengths, batch_first = True)
-            targets, _ = pack_padded_sequence(targets, decode_lengths, batch_first = True)
+            scores = pack_padded_sequence(scores, decode_lengths, batch_first = True)
+            targets = pack_padded_sequence(targets, decode_lengths, batch_first = True)
+            
+            scores = scores.data
+            targets = targets.data
+            
+            # Calculate loss
+            loss = criterion(scores, targets)
+
+            # Add doubly stochastic attention regularization
+            loss += alpha_c * ((1. - alphas.sum(dim=1)) ** 2).mean()
             
             losses.update(loss.item(), sum(decode_lengths))
         

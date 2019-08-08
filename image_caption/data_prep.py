@@ -19,7 +19,7 @@ from random import seed, choice, sample
 
 path = 'input_data/flickr30k_images'
 files = ['train.csv', 'test.csv', 'val.csv']
-'''
+
 train_images = []
 train_image_captions = []
 val_images = []
@@ -68,8 +68,8 @@ with open(os.path.join(path, 'WORDMAP_' + base_filename + '.json'), 'w') as j:
     json.dump(words2idx, j)
 
 print('Completed Word Map')
-'''
-max_len = 410
+
+max_len = 200
 seed(111)
 for impaths, imcaps, split in [(train_images, train_image_captions, 'TRAIN'),
                                (val_images, val_image_captions, 'VAL'),
@@ -110,16 +110,14 @@ for impaths, imcaps, split in [(train_images, train_image_captions, 'TRAIN'),
             images[i] = img
             
             for j, c in enumerate(captions):
-                #This encodes?
                 enc_c = [words2idx['<start>']] + \
                         [words2idx[word] if word in words2idx.keys() else words2idx['<unk>'] for word in c.split(' ') ] + \
-                        [words2idx['<end>']] + [words2idx['<pad>']] * (max_len - len(c))
+                        [words2idx['<end>']] + [words2idx['<pad>']] * (max_len - len(c.split(' ')))
                 
                 enc_captions.append(enc_c)
-                caplens.append((len(c) + 2)) #Adding <start> and <end>
-        print(images.shape[0])
-        print(len(enc_captions))
-        print(len(caplens))        
+                caplens.append((len(c.split(' ')) + 2)) #Adding <start> and <end>
+                assert len(enc_c) == (max_len + 2)
+        assert max(caplens) <= (max_len + 2)
         assert images.shape[0] * captions_per_image == len(enc_captions) == len(caplens)
         
         with open(os.path.join(path, split + '_CAPTIONS_' + base_filename + '.json'), 'w') as j:
