@@ -44,7 +44,7 @@ grad_clip = 5.
 alpha_c = 1. #reg parameter for "doubly stochastic attention"
 best_bleu4 = 0.
 print_freq = 100
-fine_tune_encoder = False
+fine_tune_encoder = True
 checkpoint = None
 
 
@@ -125,7 +125,8 @@ def validate(val_loader, encoder, decoder, criterion):
             scores, caps_sorted, decode_lengths, alphas, sort_ind = decoder(img, caps, caplens)
             
             targets = caps_sorted[:, 1:]
-        
+            
+            scores_copy = scores.clone()
             scores = pack_padded_sequence(scores, decode_lengths, batch_first = True)
             targets = pack_padded_sequence(targets, decode_lengths, batch_first = True)
             
@@ -153,7 +154,7 @@ def validate(val_loader, encoder, decoder, criterion):
                 
             #Collect yhat
             _, preds = torch.max(scores_copy, dim = 2)
-            preds = preds.to_list()
+            #preds = preds.to_list()
             temp_preds = list()
             for j, p in enumerate(preds):
                 temp_preds.append(preds[j][:decode_lengths[j]])
@@ -213,10 +214,10 @@ val_loader = torch.utils.data.DataLoader(CaptionDataset(path, base_filename, 'VA
                                           batch_size = batch_size, shuffle = True, num_workers = workers, pin_memory = True)
 
 for epoch in range(start_epoch, epochs):
-    #early stopping if no imporvement after 20 epochs
-    if epochs_since_improvement == 20:
+    #early stopping if no imporvement after 10 epochs
+    if epochs_since_improvement == 10:
         break
-    if (epochs_since_improvement > 0) and (epochs_since_improvement % 8 == 0):
+    if (epochs_since_improvement > 0) and (epochs_since_improvement % 4 == 0):
         adjust_learning_rate(decoder_optimizer, 0.8)
         if fine_tune_encoder:
             adjust_learning_rate(encoder_optimizer, 0.8)
@@ -234,5 +235,5 @@ for epoch in range(start_epoch, epochs):
     else:
         epochs_since_improvement = 0
     
-    save_checkpoint(data_name, epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer,
+    save_checkpoint(base_filename, epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer,
                     decoder_optimizer, recent_bleu4, is_best)

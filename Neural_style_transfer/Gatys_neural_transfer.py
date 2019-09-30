@@ -15,6 +15,7 @@ from torch.autograd import Variable
 from PIL import Image
 import scipy.misc
 import numpy as np
+from tqdm import tqdm
 
 class Gram(nn.Module):
     def forward(self, input):
@@ -204,37 +205,44 @@ for reg in [1e-4, 1e-5, 1e-6, 1e-7, 1e-8]:
     counter += 1
 ''' 
 series = {#'Erin': ['IMG_2738.JPG', 'leonid_afremov_bride.jpg'],
-          'Frank': ['Frank.JPG', 'im_blau.jpg'],
+          #'Frank': ['Frank.JPG', 'im_blau.jpg'],
           #'Network': ['CNN_arch2.jpg', 'PCB3.jpg'],
           #'Python': ['python-logo2.jpg', 'meta_code2.jpg']
-          }
+          #'Kroger' : ['kroger_logo.jpeg', 'GREGMIKE2.jpg'],
+          #'Chicos' : ['chicos_logo.jpeg', 'mastodon_logo.jpg'],
+          #'360i' : ['360i_logo.jpg', 'LT_sign2.jpg'],
+          'AAP' : ['AAP_logo.jpeg', 'flag.jpeg']}
 
 for name in series.keys():
-    files = series[name]
-    
-    aspect_ratio = Image.open('transfer_data/' + files[0]).size[0]/Image.open('transfer_data/' + files[0]).size[1]
-    size_seed = 256
-    img_size = (size_seed, int(np.round_(size_seed*aspect_ratio, 0)))
-    loader = transforms.Compose([transforms.Resize((img_size[0], img_size[1])), transforms.ToTensor()])
-    unloader = transforms.ToPILImage()
-
-    dtype = torch.FloatTensor
-    
-    style = image_loader('transfer_data/' + files[1]).type(dtype)
-    content = image_loader('transfer_data/' + files[0]).type(dtype)
-    new_img = image_loader('transfer_data/' + files[0]).type(dtype)
-    new_img.data = torch.randn(new_img.data.size()).type(dtype)
-    
-    n_epochs = 1501
-    style_cnn = StyleCNN(style, content, new_img, alpha = 1, beta = 1800, reg = 1e2, norm_mean = vgg19_norm_mean, norm_std = vgg19_norm_std)
-    #print(file[:-4])
-    for i in range(n_epochs):
-        new_img = style_cnn.train()
-        #print('Epoch number: %d' % (i))
-        
-        if i % 100 == 0:
+    for beta in [2500]:
+        for reg in [1e2]:
             
-            print('Epoch number: %d' % (i))
-            path = 'transfer_data/Gatys_output/256/RMSprop_beta1800_reg.1e2_epoch_{0}_with_all.tv_{1}.png'.format(i, name)
-            new_img.data.clamp_(0, 1)
-            save_image(new_img, path)
+            files = series[name]
+            
+            aspect_ratio = Image.open('transfer_data/' + files[0]).size[0]/Image.open('transfer_data/' + files[0]).size[1]
+            size_seed = 256
+            img_size = (size_seed, int(np.round_(size_seed*aspect_ratio, 0)))
+            loader = transforms.Compose([transforms.Resize((img_size[0], img_size[1])), transforms.ToTensor()])
+            unloader = transforms.ToPILImage()
+        
+            dtype = torch.FloatTensor
+            
+            style = image_loader('transfer_data/' + files[1]).type(dtype)
+            content = image_loader('transfer_data/' + files[0]).type(dtype)
+            new_img = image_loader('transfer_data/' + files[0]).type(dtype)
+            new_img.data = torch.randn(new_img.data.size()).type(dtype)
+    
+
+            n_epochs = 2001
+            style_cnn = StyleCNN(style, content, new_img, alpha = 1, beta = beta, reg = reg, norm_mean = vgg19_norm_mean, norm_std = vgg19_norm_std)
+            #print(file[:-4])
+            for i in tqdm(range(n_epochs)):
+                new_img = style_cnn.train()
+                #print('Epoch number: %d' % (i))
+                
+                if i % 300 == 0:
+                    
+                    #print('Epoch number: %d' % (i))
+                    path = 'transfer_data/Gatys_output/256/RMSprop_beta{0}_reg.{1}_epoch_{2}_with_all.tv_{3}.png'.format(beta, reg, i, name)
+                    new_img.data.clamp_(0, 1)
+                    save_image(new_img, path)
