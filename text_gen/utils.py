@@ -44,6 +44,6 @@ class LRUCache(Generic[K, V]):
                 self._cache.popitem(last=False)
         self._cache[key] = value
         
-def random_sample(logits: torch.Tensor, temperature: float = 1.0) -> int:
+def random_sample(logits, temperature = 1.0):
     d = torch.distributions.Categorical(logits=logits / temperature)
     return d.sample().item()

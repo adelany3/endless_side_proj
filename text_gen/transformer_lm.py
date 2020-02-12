@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 16 14:57:59 2019
+Created on Wed Oct 16 14:57:59 2019test.size
 
 @author: alec.delany
 """
 
 import torch
-from transformers import *
-from tqdm import tqdm
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+#from pytorch_pretrained_bert.tokenization_gpt2 import GPT2Tokenizer
+#from pytorch_pretrained_bert.modeling_gpt2 import GPT2LMHeadModel
 from utils import LRUCache, random_sample
 
-tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-model = GPT2LMHeadModel.from_pretrained('gpt2')
+class LanguageModel:
+    def predict(self, previous, next_word):
+        raise NotImplementedError
 
-class LanguageModel():
+    def __getitem__(self, index):
+        raise NotImplementedError
+
+class TextGen(LanguageModel):
     def __init__(self, cache_size = 0):
         self._cache = LRUCache(cache_size, default_value = (None, None))
-        self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-        self.model = GPT2LMHeadModel.from_pretrained('gpt2')
+        #self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+        #self.model = GPT2LMHeadModel.from_pretrained('https://storage.googleapis.com/allennlp/models/gpt2-345M-dump')
+        self.tokenizer = GPT2Tokenizer.from_pretrained('gpt-2')
+        self.model = GPT2LMHeadModel.from_pretrained('gpt-2')
         self.END_OF_TEXT = self.tokenizer.encoder['<|endoftext|>']
         
     def predict(self, previous, next_word = None):
@@ -36,11 +43,11 @@ class LanguageModel():
             
         inputs = torch.LongTensor([token_ids])
         
-        with torch.no_grad():
-            logits, present = self.model(inputs, past = past)
+        #with torch.no_grad():
+        logits, present = self.model(inputs, past = past)
         logits = logits[0, -1]
         
-        key = [previous if next_word is None else previous + next_word]
+        key = previous if next_word is None else previous + next_word
         self._cache[key] = logits, present
         
         return logits
@@ -54,11 +61,12 @@ class LanguageModel():
         logits = self.predict(seed)
         
             
-        for _ in tqdm(range(max_len)):
+        for _ in range(max_len):
             next_id = random_sample(logits, temp)
+            #next_id = torch.argmax(torch.nn.functional.softmax(logits/temp, dim = 0)).item()
             next_word_ = self[next_id]
             
-            #print(next_word_)
+            print(next_word_)
             
             if next_word_ == '<|endoftext|>':
                 break
@@ -68,6 +76,6 @@ class LanguageModel():
         return output
     
     
-model = LanguageModel()
-#test = model.predict(previous = 'What about the', next_word = None)  
-print(model.generate(seed = 'To make a great dream come true, the first requirement is a great capacity to dream; the second is', max_len = 50, temp = 1.0))      
+model = TextGen()
+#test = model.predict(previous = 'Franz Kafka awoke one morning to learn that ', next_word = None)  
+print(model.generate(seed = 'Franz Kafka awoke one morning to learn that ', max_len = 50, temp = 1.))      
