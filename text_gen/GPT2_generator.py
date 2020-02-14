@@ -48,7 +48,7 @@ def sample_sequence(model, length, context, num_samples=1, temperature=1, top_k=
         for _ in trange(length):
 
             inputs = {"input_ids": generated}
-            outputs = model(**inputs)  # Note: we could also use 'past' with GPT-2/Transfo-XL/XLNet/CTRL (cached hidden-states)
+            outputs = model(**inputs)  #could also use 'past' (cached hidden-states)
             next_token_logits = outputs[0][0, -1, :] / (temperature if temperature > 0 else 1.0)
 
             for _ in set(generated.view(-1).tolist()):
@@ -73,12 +73,12 @@ class LanguageGenerator:
 
     def predict(self, text):
         indexed_tokens = self.tokenizer.encode(text)
-        output = sample_sequence(self.model, self.num_words, indexed_tokens, temperature = 0.75, repetition_penalty = 0.8)
+        output = sample_sequence(self.model, self.num_words, indexed_tokens, temperature = 0.9, repetition_penalty = 1.0)
         return self.tokenizer.decode(
             output[0, 0:].tolist(), clean_up_tokenization_spaces=True, skip_special_tokens=True)
     
 if __name__ == '__main__':
     txt = open('the_raven.txt').read()
-    output = LanguageGenerator(120, 'distilgpt2').predict(txt[:1000])
+    output = LanguageGenerator(120, 'distilgpt2').predict(txt[:2700])
     print('\n')
-    print(output[950:])
+    print(output[2650:])
